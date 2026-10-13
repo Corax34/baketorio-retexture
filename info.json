@@ -1,0 +1,9 @@
+{
+	"name": "baketorio-retexture",
+	"version": "0.1.0",
+	"title": "Baketorio Retexture",
+	"author": "ButteredCoffee",
+	"factorio_version": "2.1",
+	"dependencies": ["base >= 2.1.20", "baketorio >= 2.1.0", "? baketorio_plus"],
+	"description": "New graphics for Baketorio: HD salt and trona ores, and a large 3D glass greenhouse (5x7) that shows the crop it is growing and how much harvest is waiting.\n\nNote: the greenhouse becomes 5x7 tiles with this mod. Adding or removing it in an existing save resizes placed greenhouses."
+}
