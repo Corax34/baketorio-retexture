@@ -1502,4 +1502,6 @@ def write_lua(sprites):
     print("Wrote", LUA_OUT)
 
 
-main()
+# Only render when run as a script; render_barn.py imports this file for its helpers.
+if __name__ == "__main__":
+    main()

@@ -5,5 +5,5 @@
 	"author": "ButteredCoffee",
 	"factorio_version": "2.1",
 	"dependencies": ["base >= 2.1.20", "baketorio >= 2.1.0", "? baketorio_plus"],
-	"description": "New graphics for Baketorio: HD salt and trona ores, and a large 3D glass greenhouse (5x7) that shows the crop it is growing and how much harvest is waiting.\n\nNote: the greenhouse becomes 5x7 tiles with this mod. Adding or removing it in an existing save resizes placed greenhouses."
+	"description": "New graphics for Baketorio: HD salt and trona ores, a large 3D glass greenhouse (5x7) that shows the crop it is growing and how much harvest is waiting, and with Baketorio+ an animated cow pasture as the barn (6x6).\n\nNote: the greenhouse becomes 5x7 and the barn 6x6 tiles with this mod. Adding or removing it in an existing save resizes placed buildings."
 }

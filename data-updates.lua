@@ -4,3 +4,4 @@
 require("prototypes.ores")
 require("prototypes.icons")
 require("prototypes.greenhouse")
+require("prototypes.barn")

@@ -2,3 +2,4 @@
 -- after every mod (including Baketorio+) has run its data.lua.
 
 require("prototypes.greenhouse-crops")
+require("prototypes.barn-animals")

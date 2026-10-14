@@ -2,8 +2,9 @@
 Version: 0.1.0
 Date: 2026-10-14
   Features:
+    - Baketorio+ barn: animated 6x6 cow pasture with a shed, hay and water troughs.
     - HD salt and trona ores: 8 stages with 8 variations each, 64 px icons, 4 item picture variants, HD trona technology icon.
     - 3D glass greenhouse, 5x7 tiles, rotatable, with shadows.
     - Greenhouses show the crop of their recipe, filling up as harvest waits in the output (12 crops, 8 stages).
   Compatibility:
-    - Baketorio+: greenhouse pipes are moved to the new edges; the barn keeps its 3x3 size.
+    - Baketorio+: greenhouse and barn pipes are moved to the new edges.

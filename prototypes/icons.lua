@@ -1,4 +1,4 @@
--- Points every prototype that uses one of Baketorio's replaced icon files at the HD
+-- Points every prototype that uses one of Baketorio's (or Baketorio+'s) replaced icon files at the HD
 -- version, wherever it is used (items, recipes, technologies, icon layers of other mods).
 -- Layer sizes keep looking the same: Factorio scales an icon layer by its icon_size.
 
@@ -11,6 +11,8 @@ local replaced = {
     ["__baketorio__/graphics/salt-mod.png"]        = { png("salt-mod"), 64 },
     ["__baketorio__/graphics/trona_tech.png"]      = { png("trona_tech"), 256 },
     ["__baketorio__/graphics/greenhouse-icon.png"] = { png("greenhouse-icon"), 64 },
+    -- Baketorio+
+    ["__baketorio_plus__/graphics/barn-icon.png"]  = { png("barn-icon"), 64 },
 }
 
 for _, prototypes in pairs(data.raw) do
