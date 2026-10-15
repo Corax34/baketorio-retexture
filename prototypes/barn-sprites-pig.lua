@@ -5,102 +5,100 @@ return {
     {
         depth = -1.55,
         body = {
-            still = { file = "barn-pig-1-still", width = 78, height = 52, shift = { -1.6969, 1.3063 } },
+            still = { file = "barn-pig-1-still", width = 78, height = 51, shift = { -1.6969, 1.2984 } },
             patches = {
-                { file = "barn-pig-1-anim-1", width = 28, height = 41, shift = { -2.1344, 1.2359 }, line_length = 48 },
+                { file = "barn-pig-1-anim-1", width = 33, height = 44, shift = { -2.1422, 1.2594 }, line_length = 48 },
                 { file = "barn-pig-1-anim-2", width = 9, height = 9, shift = { -1.0953, 1.1266 }, line_length = 48 },
             },
         },
         shadow = {
-            still = { file = "barn-pig-1-shadow-still", width = 158, height = 112, shift = { -1.3844, 1.3688 } },
+            still = { file = "barn-pig-1-shadow-still", width = 161, height = 108, shift = { -1.4078, 1.4000 } },
             patches = {
                 { file = "barn-pig-1-shadow-anim-1", width = 4, height = 6, shift = { -0.3844, 1.6031 }, line_length = 48 },
-                { file = "barn-pig-1-shadow-anim-2", width = 4, height = 1, shift = { -1.8062, 1.4859 }, line_length = 48 },
             },
         },
     },
     {
         depth = -0.95,
         body = {
-            still = { file = "barn-pig-2-still", width = 77, height = 53, shift = { -1.6891, 0.7047 } },
+            still = { file = "barn-pig-2-still", width = 79, height = 51, shift = { -1.7047, 0.6891 } },
             patches = {
-                { file = "barn-pig-2-anim-1", width = 26, height = 37, shift = { -2.1500, 0.6734 }, line_length = 48 },
+                { file = "barn-pig-2-anim-1", width = 32, height = 42, shift = { -2.1500, 0.6656 }, line_length = 48 },
                 { file = "barn-pig-2-anim-2", width = 9, height = 9, shift = { -1.0953, 0.5172 }, line_length = 48 },
             },
         },
         shadow = {
-            still = { file = "barn-pig-2-shadow-still", width = 154, height = 115, shift = { -1.4156, 0.7359 } },
+            still = { file = "barn-pig-2-shadow-still", width = 154, height = 116, shift = { -1.4156, 0.7438 } },
             patches = {
                 { file = "barn-pig-2-shadow-anim-1", width = 3, height = 6, shift = { -0.3922, 0.9938 }, line_length = 48 },
-                { file = "barn-pig-2-shadow-anim-2", width = 3, height = 2, shift = { -1.7984, 0.8844 }, line_length = 48 },
             },
         },
     },
     {
         depth = -1.75,
         body = {
-            still = { file = "barn-pig-3-still", width = 68, height = 76, shift = { 0.3031, 1.4625 } },
+            still = { file = "barn-pig-3-still", width = 69, height = 75, shift = { 0.3109, 1.4547 } },
             patches = {
-                { file = "barn-pig-3-anim-1", width = 31, height = 49, shift = { 0.6703, 1.6891 }, line_length = 48 },
+                { file = "barn-pig-3-anim-1", width = 41, height = 52, shift = { 0.7172, 1.6656 }, line_length = 48 },
                 { file = "barn-pig-3-anim-2", width = 9, height = 8, shift = { -0.1422, 0.9781 }, line_length = 48 },
             },
         },
         shadow = {
-            still = { file = "barn-pig-3-shadow-still", width = 161, height = 137, shift = { 0.6859, 1.3766 } },
+            still = { file = "barn-pig-3-shadow-still", width = 179, height = 160, shift = { 0.8266, 1.5719 } },
             patches = {
-                { file = "barn-pig-3-shadow-anim-1", width = 3, height = 7, shift = { 0.8266, 1.9859 }, line_length = 48 },
-                { file = "barn-pig-3-shadow-anim-2", width = 8, height = 2, shift = { 1.1313, 2.2125 }, line_length = 48 },
+                { file = "barn-pig-3-shadow-anim-1", width = 46, height = 7, shift = { 1.1781, 2.0172 }, line_length = 48 },
+                { file = "barn-pig-3-shadow-anim-2", width = 15, height = 2, shift = { 1.2328, 2.2125 }, line_length = 48 },
             },
         },
     },
     {
         depth = 0.80,
         body = {
-            still = { file = "barn-pig-4-still", width = 65, height = 72, shift = { 1.5141, -1.0062 } },
+            still = { file = "barn-pig-4-still", width = 67, height = 73, shift = { 1.4984, -1.0297 } },
             patches = {
-                { file = "barn-pig-4-anim-1", width = 37, height = 45, shift = { 1.0922, -1.4047 }, line_length = 48 },
+                { file = "barn-pig-4-anim-1", width = 41, height = 52, shift = { 1.0609, -1.4281 }, line_length = 48 },
                 { file = "barn-pig-4-anim-2", width = 9, height = 7, shift = { 1.9359, -0.8734 }, line_length = 48 },
             },
         },
         shadow = {
-            still = { file = "barn-pig-4-shadow-still", width = 147, height = 160, shift = { 1.5922, -1.0219 } },
+            still = { file = "barn-pig-4-shadow-still", width = 149, height = 163, shift = { 1.5766, -1.0453 } },
             patches = {
-                { file = "barn-pig-4-shadow-anim-1", width = 118, height = 17, shift = { 1.7875, -0.4516 }, line_length = 34 },
-                { file = "barn-pig-4-shadow-anim-2", width = 41, height = 20, shift = { 1.6547, -1.1000 }, line_length = 48 },
+                { file = "barn-pig-4-shadow-anim-1", width = 124, height = 18, shift = { 1.7406, -0.4594 }, line_length = 33 },
+                { file = "barn-pig-4-shadow-anim-2", width = 42, height = 23, shift = { 1.6313, -1.0766 }, line_length = 48 },
             },
         },
     },
     {
         depth = -0.05,
         body = {
-            still = { file = "barn-pig-5-still", width = 79, height = 48, shift = { 0.5141, -0.2406 } },
+            still = { file = "barn-pig-5-still", width = 78, height = 49, shift = { 0.5063, -0.2797 } },
             patches = {
-                { file = "barn-pig-5-anim-1", width = 86, height = 71, shift = { 0.4750, -0.0609 }, line_length = 47 },
-                { file = "barn-pig-5-anim-2", width = 5, height = 7, shift = { 1.1078, -0.4828 }, line_length = 48 },
+                { file = "barn-pig-5-anim-1", width = 88, height = 70, shift = { 0.4594, -0.1156 }, line_length = 46 },
+                { file = "barn-pig-5-anim-2", width = 5, height = 6, shift = { 1.0922, -0.5219 }, line_length = 48 },
             },
         },
         shadow = {
-            still = { file = "barn-pig-5-shadow-still", width = 144, height = 117, shift = { 0.7563, -0.2172 } },
+            still = { file = "barn-pig-5-shadow-still", width = 144, height = 109, shift = { 0.7563, -0.3266 } },
             patches = {
-                { file = "barn-pig-5-shadow-anim-1", width = 103, height = 63, shift = { 0.7172, 0.1422 }, line_length = 39 },
-                { file = "barn-pig-5-shadow-anim-2", width = 1, height = 2, shift = { 1.1078, -0.1469 }, line_length = 48 },
+                { file = "barn-pig-5-shadow-anim-1", width = 104, height = 65, shift = { 0.6938, 0.1109 }, line_length = 39 },
+                { file = "barn-pig-5-shadow-anim-2", width = 1, height = 2, shift = { 1.0922, -0.1937 }, line_length = 48 },
             },
         },
     },
     {
         depth = 0.35,
         body = {
-            still = { file = "barn-pig-6-still", width = 79, height = 43, shift = { -1.7516, -0.5922 } },
+            still = { file = "barn-pig-6-still", width = 80, height = 45, shift = { -1.7437, -0.6234 } },
             patches = {
-                { file = "barn-pig-6-anim-1", width = 81, height = 71, shift = { -1.8609, -0.4516 }, line_length = 48 },
-                { file = "barn-pig-6-anim-2", width = 6, height = 8, shift = { -1.1031, -0.6156 }, line_length = 48 },
+                { file = "barn-pig-6-anim-1", width = 83, height = 75, shift = { -1.8766, -0.5453 }, line_length = 48 },
+                { file = "barn-pig-6-anim-2", width = 6, height = 7, shift = { -1.1031, -0.6547 }, line_length = 48 },
             },
         },
         shadow = {
-            still = { file = "barn-pig-6-shadow-still", width = 169, height = 137, shift = { -1.4859, -0.4359 } },
+            still = { file = "barn-pig-6-shadow-still", width = 169, height = 136, shift = { -1.4859, -0.4906 } },
             patches = {
-                { file = "barn-pig-6-shadow-anim-1", width = 87, height = 33, shift = { -1.5328, -0.0609 }, line_length = 47 },
-                { file = "barn-pig-6-shadow-anim-2", width = 91, height = 16, shift = { -1.7047, -0.6156 }, line_length = 45 },
+                { file = "barn-pig-6-shadow-anim-1", width = 68, height = 57, shift = { -1.3687, -0.3109 }, line_length = 48 },
+                { file = "barn-pig-6-shadow-anim-2", width = 47, height = 58, shift = { -2.0953, -0.4437 }, line_length = 48 },
             },
         },
     },

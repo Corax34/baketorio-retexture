@@ -1,10 +1,11 @@
 ---------------------------------------------------------------------------------------------------
 Version: 0.1.0
-Date: 2026-10-14
+Date: 2026-10-16
   Features:
-    - Baketorio+ barn: animated 6x6 cow pasture with a shed, hay and water troughs.
+    - Baketorio+ barn: animated 6x6 pasture with a shed, hay and water troughs, showing the animals in the barn (up to 6): cows, pigs, sheep and hens, with their own bulls, boars and rams, and hens brooding on nests while eggs hatch.
     - HD salt and trona ores: 8 stages with 8 variations each, 64 px icons, 4 item picture variants, HD trona technology icon.
     - 3D glass greenhouse, 5x7 tiles, rotatable, with shadows.
     - Greenhouses show the crop of their recipe, filling up as harvest waits in the output (12 crops, 8 stages).
   Compatibility:
     - Baketorio+: greenhouse and barn pipes are moved to the new edges.
+    - Baketorio+ 0.6.1 loads on Factorio 2.1.21 (its butter item used the removed fuel_category field; temporary fix until Baketorio+ is updated).

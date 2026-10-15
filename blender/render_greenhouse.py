@@ -333,12 +333,28 @@ def apply_game_look(mats):
         nt.links.new(color, base_in)
 
 
+def read_pixels(img):
+    """An image's pixels as an (h, w, 4) float array, bottom row first. Much faster than
+    img.pixels[:], which builds a Python list of every value."""
+    import numpy as np
+    w, h = img.size
+    px = np.empty(w * h * 4, dtype=np.float32)
+    img.pixels.foreach_get(px)
+    return px.reshape(h, w, 4)
+
+
+def write_pixels(img, px):
+    """Sets an image's pixels from an (h, w, 4) float array, bottom row first."""
+    import numpy as np
+    img.pixels.foreach_set(np.ascontiguousarray(px, dtype=np.float32).ravel())
+
+
 def grade(path):
     """Factorio-style colour grade: slightly desaturated, warm, gentle contrast."""
     import numpy as np
     img = bpy.data.images.load(path)
     w, h = img.size
-    px = np.array(img.pixels[:], dtype=np.float32).reshape(h, w, 4)
+    px = read_pixels(img)
     bpy.data.images.remove(img)
     rgb = px[..., :3]
     lum = (rgb * np.array([0.2126, 0.7152, 0.0722], dtype=np.float32)).sum(-1, keepdims=True)
@@ -348,7 +364,7 @@ def grade(path):
     rgb = rgb + 0.12 * (rgb - rgb * rgb) * (rgb - 0.5) * 4  # soft S-curve
     px[..., :3] = np.clip(rgb, 0, 1)
     out = bpy.data.images.new("graded", w, h, alpha=True)
-    out.pixels[:] = px.ravel()
+    write_pixels(out, px)
     out.filepath_raw = path
     out.file_format = "PNG"
     out.save()
@@ -1338,10 +1354,10 @@ def apply_mask(path, mask_path):
     import numpy as np
     img = bpy.data.images.load(path)
     mask = bpy.data.images.load(mask_path)
-    px = np.array(img.pixels[:], dtype=np.float32).reshape(-1, 4)
-    m = np.array(mask.pixels[:], dtype=np.float32).reshape(-1, 4)
+    px = read_pixels(img).reshape(-1, 4)
+    m = read_pixels(mask).reshape(-1, 4)
     px[:, 3] *= m[:, 3]
-    img.pixels[:] = px.ravel()
+    write_pixels(img, px)
     img.filepath_raw = path
     img.file_format = "PNG"
     img.save()
@@ -1354,14 +1370,14 @@ def downscale(path, factor):
     import numpy as np
     img = bpy.data.images.load(path)
     w, h = img.size
-    px = np.array(img.pixels[:], dtype=np.float32).reshape(h, w, 4)
+    px = read_pixels(img)
     bpy.data.images.remove(img)
     px[..., :3] *= px[..., 3:4]
     px = px.reshape(h // factor, factor, w // factor, factor, 4).mean(axis=(1, 3))
     a = px[..., 3:4]
     px[..., :3] = np.where(a > 0, px[..., :3] / np.maximum(a, 1e-6), 0)
     out = bpy.data.images.new("downscaled", w // factor, h // factor, alpha=True)
-    out.pixels[:] = px.ravel()
+    write_pixels(out, px)
     out.filepath_raw = path
     out.file_format = "PNG"
     out.save()

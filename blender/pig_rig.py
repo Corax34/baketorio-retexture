@@ -87,17 +87,24 @@ def rig_pig(obj, info, name):
         if leg[0].x > 0:                                   # front legs
             _, ld, _ = _project(co, [np.array(q) for q in leg])
             near_leg |= (ld < 0.1) & (z < 0.38)
-    in_front = (d < 0.3) & (x > 0.25) & ~near_leg
+    in_front = (d < 0.36) & (x > 0.25) & ~near_leg
     w_neck, w_head = _chain_weights(s, [(0.06, L1), (L1, 99)], 0.12)   # wide blends: no sharp bend
     weights["neck"] = np.where(in_front, w_neck, 0)
     weights["head"] = np.where(in_front, w_head, 0)
-    # Ears: points close to an ear segment, beyond its base.
-    for bname in ("ear.R", "ear.L"):
-        base, tip = bones[bname]
-        es, ed, _ = _project(co, [np.array(base), np.array(tip)])
-        ew = np.where(ed < 0.05, _smooth(0.015, 0.045, es), 0) * (weights["head"] > 0)
+    # Ears: the ear sheets (their own material), each to its nearer ear bone, fading in from
+    # where they leave the head.
+    mat_of = np.zeros(n, dtype=int)
+    for poly in me.polygons:
+        mat_of[list(poly.vertices)] = poly.material_index
+    ear_mats = [i for i, m in enumerate(me.materials) if m.name.split(".")[0] in ("ear_pink", "ear_black")]
+    on_ear = np.isin(mat_of, ear_mats)
+    proj = {b: _project(co, [np.array(bones[b][0]), np.array(bones[b][1])]) for b in ("ear.R", "ear.L")}
+    nearer_r = proj["ear.R"][1] < proj["ear.L"][1]
+    for bname, mine in (("ear.R", nearer_r), ("ear.L", ~nearer_r)):
+        es = proj[bname][0]
+        ew = np.where(on_ear & mine, _smooth(0.0, 0.05, es), 0)
         weights[bname] = ew
-        weights["head"] = weights["head"] * (1 - ew)
+        weights["head"] = np.where(on_ear & mine, 1 - ew, weights["head"])
     # Tail: the points of the tail tube (close to its centre line), fading in where it
     # leaves the rump so the skin around the root bends softly.
     ts, td, _ = _project(co, [np.array(p) for p in tail])
@@ -177,10 +184,10 @@ def pose_pig(rig, pose, t, seed):
         _add_rot(pbs["neck"], up, rad(7) * turn)
         _add_rot(pbs["head"], up, rad(5) * turn)
         _add_rot(pbs["head"], side, rad(3) * math.sin(tau * 2 * (t + ph) + 1.0))
-    # Ears: one flick each per loop at different times.
+    # Ears: one flick back each per loop, at different times.
     for k, ear in enumerate(("ear.R", "ear.L")):
         flick = _pulse(t, (ph + 0.15 + 0.5 * k) % 1.0, 0.04)
-        _add_rot(pbs[ear], fwd, rad(25) * flick * (1 if k else -1))
+        _add_rot(pbs[ear], side, -rad(22) * flick)
     # Tail: pigs wag their curly tails, asleep too.
     wag = rad(18) * math.sin(tau * 2 * (t + ph))
     _add_rot(pbs["tail1"], up, wag)

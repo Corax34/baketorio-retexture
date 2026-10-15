@@ -5,5 +5,5 @@ return {
     base = { width = 448, height = 576, shift = { 0.1000, -1.1000 } },
     shadow = { width = 640, height = 512, shift = { 1.6000, 0.2000 } },
     -- Animal kinds, each with its positions in prototypes/barn-sprites-<kind>.lua
-    animals = { "cow", "pig" },
+    animals = { "cow", "bull", "pig", "boar", "sheep", "ram", "chicken", "nest" },
 }

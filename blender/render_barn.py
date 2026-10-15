@@ -40,6 +40,10 @@ import cow_model  # noqa: E402
 import cow_rig  # noqa: E402
 import pig_model  # noqa: E402
 import pig_rig  # noqa: E402
+import sheep_model  # noqa: E402
+import sheep_rig  # noqa: E402
+import chicken_model  # noqa: E402
+import chicken_rig  # noqa: E402
 
 M, between, compose, material, place = gh.M, gh.between, gh.compose, gh.material, gh.place
 V = Vector
@@ -57,6 +61,8 @@ TILE_PX = gh.TILE_PX
 TOP_H = 2.15              # highest point of the scene (shed roof), for framing
 PATCHES_PER_ANIMAL = 2    # animated patches per animal after merging (memory vs number of layers)
 ANIMAL_SCALE = 0.85       # animals a little smaller than life size, to suit the buildings
+HEN_SCALE = 1.25          # hens larger than life: at life size they'd be specks in the paddock
+MALE_SCALE = 1.06         # bulls, boars and rams are a little bigger than the females
 HAY_H = 0.5               # height of the hay trough (fits the scaled cows' reach)
 WATER_H = 0.48            # height of the water trough rim
 FEEDER = (-2.3, -1.25)    # centre of the low pig feeder along the west fence
@@ -87,6 +93,44 @@ PIGS = [
     (0.55, -0.05, 195, "lying", "pig_pink"),       # asleep in the wallow
     (-1.75, 0.35, 170, "lying", "pig_spotted"),    # asleep in front of the shed
 ]
+SHEEP = [
+    (0.28, 1.68, 90, "eating", "suffolk"),        # muzzle in the hay trough
+    (1.38, 1.68, 90, "eating", "whiteface"),
+    (1.5, -0.88, 0, "drinking", "suffolk"),       # muzzle in the water trough
+    (-0.8, -1.55, 210, "grazing", "suffolk"),
+    (-1.85, 0.38, 165, "lying", "black"),         # chewing the cud in front of the shed
+    (0.5, -2.05, -25, "standing", "whiteface"),
+]
+HENS = [
+    (-1.9, -1.6, 180, "feeding", "hen_brown"),     # breast at the low feeder, beak in the feed
+    (-1.9, -0.9, 180, "feeding", "hen_white"),
+    (0.45, -1.3, 25, "flapping", "hen_white"),     # in the open, where the wings have room
+    (1.4, 0.9, 210, "scratching", "hen_black"),
+    (-1.6, 0.6, 160, "sitting", "hen_brown"),      # settled in front of the shed
+    (1.0, -2.2, -60, "pecking", "hen_brown"),
+]
+# Hatching eggs: a hen brooding on a straw nest for each egg.
+NESTS = [
+    (-2.25, 0.5, 150, "brooding", "hen_brown"),    # in front of the shed
+    (-1.7, 0.55, 200, "brooding", "hen_white"),
+    (-1.15, 0.5, 170, "brooding", "hen_brown"),
+    (2.35, 0.45, 190, "brooding", "hen_white"),     # along the east fence
+    (2.35, 1.05, 160, "brooding", "hen_brown"),
+    (1.8, 0.75, 120, "brooding", "hen_black"),
+]
+# Sheep coats: (fleece, face and legs).
+SHEEP_COATS = {
+    "suffolk": ("wool_white", "sheep_skin_black"),
+    "whiteface": ("wool_white", "sheep_skin_white"),
+    "black": ("wool_black", "sheep_skin_black"),
+}
+def pig_parts(coat):
+    """Snout, ear and trotter materials for a pig's coat."""
+    if coat == "pig_black":
+        return {"snout_mat": "snout_black", "ear_mat": "ear_black", "trotter_mat": "trotter"}
+    return {"snout_mat": "snout_pink", "ear_mat": "ear_pink", "trotter_mat": "trotter_pale"}
+
+
 ANIMALS = {
     "cow": {
         "positions": COWS,
@@ -95,12 +139,58 @@ ANIMALS = {
         "rig": cow_rig.rig_cow,
         "pose": cow_rig.pose_cow,
     },
+    # Males take the same places and poses as the females (the barn script swaps them in).
+    "bull": {
+        "positions": COWS,
+        "scale": ANIMAL_SCALE * MALE_SCALE,
+        "build": lambda name, pose, coat, mats: cow_model.build_cow_mesh(name, pose, coat, mats, bull=True),
+        "rig": cow_rig.rig_cow,
+        "pose": cow_rig.pose_cow,
+    },
     "pig": {
         "positions": PIGS,
-        "build": lambda name, pose, coat, mats: pig_model.build_pig_mesh(
-            name, pose, coat, mats, "snout_black" if coat == "pig_black" else "snout_pink"),
+        "build": lambda name, pose, coat, mats: pig_model.build_pig_mesh(name, pose, coat, mats, **pig_parts(coat)),
         "rig": pig_rig.rig_pig,
         "pose": pig_rig.pose_pig,
+        "roll_lying": True,
+    },
+    "boar": {
+        "positions": PIGS,
+        "scale": ANIMAL_SCALE * MALE_SCALE,
+        "roll_lying": True,
+        "build": lambda name, pose, coat, mats: pig_model.build_pig_mesh(name, pose, coat, mats, boar=True,
+                                                                         **pig_parts(coat)),
+        "rig": pig_rig.rig_pig,
+        "pose": pig_rig.pose_pig,
+    },
+    "sheep": {
+        "positions": SHEEP,
+        "build": lambda name, pose, coat, mats: sheep_model.build_sheep_mesh(
+            name, pose, SHEEP_COATS[coat][0], mats, SHEEP_COATS[coat][1]),
+        "rig": sheep_rig.rig_sheep,
+        "pose": sheep_rig.pose_sheep,
+    },
+    "ram": {
+        "positions": SHEEP,
+        "scale": ANIMAL_SCALE * MALE_SCALE,
+        "build": lambda name, pose, coat, mats: sheep_model.build_sheep_mesh(
+            name, pose, SHEEP_COATS[coat][0], mats, SHEEP_COATS[coat][1], ram=True),
+        "rig": sheep_rig.rig_sheep,
+        "pose": sheep_rig.pose_sheep,
+    },
+    "chicken": {
+        "positions": HENS,
+        "scale": HEN_SCALE,
+        "build": lambda name, pose, coat, mats: chicken_model.build_chicken_mesh(name, pose, coat, mats),
+        "rig": chicken_rig.rig_chicken,
+        "pose": chicken_rig.pose_chicken,
+    },
+    "nest": {
+        "positions": NESTS,
+        "scale": HEN_SCALE,
+        "build": lambda name, pose, coat, mats: chicken_model.build_chicken_mesh(name, pose, coat, mats),
+        "rig": chicken_rig.rig_chicken,
+        "pose": chicken_rig.pose_chicken,
     },
 }
 ONLY = ARGS[ARGS.index("only") + 1].split(",") if "only" in ARGS else list(ANIMALS)
@@ -126,24 +216,39 @@ def pasture_materials(mats):
                                  noise=((0.04, 0.04, 0.04), 2.4, 2, (0.5, 0.53))),
         "cow_brown": material("cow_brown", (0.42, 0.24, 0.13), rough=0.75, noise=((0.32, 0.17, 0.09), 4)),
         "muzzle": material("muzzle", (0.62, 0.42, 0.38), rough=0.5),
+        "brass": material("brass", (0.6, 0.42, 0.15), rough=0.3, metallic=1.0),
+        "tusk": material("tusk", (0.78, 0.72, 0.6), rough=0.35),
+        "egg_shell": material("egg_shell", (0.72, 0.5, 0.33), rough=0.45),
+        "ram_horn": material("ram_horn", (0.5, 0.42, 0.32), rough=0.55, noise=((0.36, 0.3, 0.22), 40)),
         "udder": material("udder", (0.78, 0.55, 0.5), rough=0.6),
         "hoof": material("hoof", (0.09, 0.08, 0.07), rough=0.6),
         "horn": material("horn", (0.8, 0.76, 0.64), rough=0.5),
         "tuft": material("tuft", (0.06, 0.05, 0.05), rough=0.9),
-        "pig_pink": material("pig_pink", (0.8, 0.42, 0.38), rough=0.6, noise=((0.72, 0.37, 0.34), 6)),
-        "pig_spotted": material("pig_spotted", (0.8, 0.42, 0.38), rough=0.6,
+        "pig_pink": material("pig_pink", (0.83, 0.61, 0.59), rough=0.6, noise=((0.77, 0.53, 0.51), 6)),
+        "pig_spotted": material("pig_spotted", (0.83, 0.61, 0.59), rough=0.6,
                                 noise=((0.1, 0.09, 0.09), 2.6, 2, (0.58, 0.61))),
         "pig_black": material("pig_black", (0.035, 0.03, 0.03), rough=0.65, specular=0.3,
                               noise=((0.065, 0.055, 0.055), 5)),
         "snout_pink": material("snout_pink", (0.72, 0.32, 0.31), rough=0.45),
+        "ear_pink": material("ear_pink", (0.83, 0.35, 0.31), rough=0.55),     # thin, pink skin
+        "wool_white": material("wool_white", (0.7, 0.67, 0.6), rough=0.9, noise=((0.55, 0.51, 0.44), 9)),
+        "wool_black": material("wool_black", (0.045, 0.038, 0.034), rough=0.9, noise=((0.085, 0.07, 0.058), 9)),
+        "sheep_skin_black": material("sheep_skin_black", (0.03, 0.026, 0.026), rough=0.5),
+        "sheep_skin_white": material("sheep_skin_white", (0.66, 0.57, 0.5), rough=0.55),
+        "comb_red": material("comb_red", (0.55, 0.03, 0.025), rough=0.4),
+        "beak_yellow": material("beak_yellow", (0.75, 0.52, 0.16), rough=0.4),
+        "eye_black": material("eye_black", (0.02, 0.015, 0.01), rough=0.1),
+        "chicken_leg": material("chicken_leg", (0.72, 0.55, 0.16), rough=0.5),
         "snout_black": material("snout_black", (0.46, 0.37, 0.35), rough=0.45),
         "trotter": material("trotter", (0.28, 0.24, 0.21), rough=0.6),
+        "trotter_pale": material("trotter_pale", (0.56, 0.45, 0.39), rough=0.5),
+        "ear_black": material("ear_black", (0.045, 0.038, 0.036), rough=0.6),
         "nostril": material("nostril", (0.06, 0.03, 0.03), rough=0.5),
         "puddle": material("puddle", (0.07, 0.055, 0.035), rough=0.05, specular=0.6),
         "pig_feed": material("pig_feed", (0.5, 0.4, 0.24), rough=0.9, noise=((0.36, 0.28, 0.15), 30, 4)),
     })
     # Coat patterns follow the skin: read from the rest positions stored on the animal mesh.
-    for key in ("cow_holstein", "cow_brown", "pig_pink", "pig_spotted", "pig_black"):
+    for key in ("cow_holstein", "cow_brown", "pig_pink", "pig_spotted", "pig_black", "wool_white", "wool_black"):
         nt = mats[key].node_tree
         attr = nt.nodes.new("ShaderNodeAttribute")
         attr.attribute_name = "rest"
@@ -152,13 +257,199 @@ def pasture_materials(mats):
                 nt.links.new(attr.outputs["Vector"], node.inputs["Vector"])
     # Pigs get mud on their legs and the underside of the belly.
     for key in ("pig_pink", "pig_spotted", "pig_black"):
-        add_mud(mats[key], top=0.3)
+        add_mud(mats[key], top=0.13, amount=0.55)
+    # Wool: soft sheen and a fine fibrous bump on top of the lumps in the geometry.
+    for key in ("wool_white", "wool_black"):
+        add_wool_bump(mats[key])
+    for coat, colours in HEN_COATS.items():
+        mats[coat] = hen_body_material(coat, colours)
+        mats[coat + "_wing"] = feather_material(coat + "_wing", colours["wing"], colours["fringe"], colours["shaft"],
+                                                colours["film"])
+        mats[coat + "_tail"] = feather_material(coat + "_tail", colours["tail"], colours["tail_fringe"],
+                                                colours["shaft"], colours["tail_film"])
+    gh.VELVET.update({"wool_white", "wool_black"})
     gh.GRIMY.update({"fence", "plank", "corrugated", "galvanised"})
     gh.BEVELED.update({"fence", "plank"})
     gh.MATTE.update({"pasture", "mud", "fence", "plank"})
 
 
-def add_mud(mat, top):
+# Hen plumage per breed: body, hackle (neck and cape), saddle (in front of the tail), breast,
+# lacing (feather edges on the body); wing feathers with their fringe and shaft; tail
+# feathers; thin-film thickness in nm for an iridescent sheen (0 = none).
+HEN_COATS = {
+    "hen_brown": {   # red-brown laying hen: golden hackle, darker wings, black tail with a green sheen
+        "body": (0.3, 0.11, 0.038), "hackle": (0.56, 0.27, 0.07), "saddle": (0.44, 0.19, 0.05),
+        "breast": (0.36, 0.14, 0.045), "lace": (0.14, 0.05, 0.018), "lace_amount": 0.4,
+        "wing": (0.25, 0.09, 0.03), "fringe": (0.48, 0.22, 0.07), "shaft": (0.55, 0.36, 0.17), "film": 0,
+        "tail": (0.025, 0.022, 0.02), "tail_fringe": (0.05, 0.04, 0.03), "tail_film": 255},
+    "hen_white": {   # white leghorn: cream hackle
+        "body": (0.8, 0.78, 0.72), "hackle": (0.84, 0.79, 0.64), "saddle": (0.82, 0.79, 0.7),
+        "breast": (0.79, 0.77, 0.72), "lace": (0.64, 0.62, 0.58), "lace_amount": 0.2,
+        "wing": (0.79, 0.77, 0.71), "fringe": (0.86, 0.84, 0.79), "shaft": (0.68, 0.66, 0.6), "film": 0,
+        "tail": (0.8, 0.78, 0.72), "tail_fringe": (0.86, 0.84, 0.79), "tail_film": 0},
+    "hen_black": {   # black hen with a beetle-green sheen (thin film: green first-order reflection)
+        "body": (0.022, 0.023, 0.026), "hackle": (0.03, 0.032, 0.034), "saddle": (0.024, 0.026, 0.028),
+        "breast": (0.02, 0.021, 0.024), "lace": (0.01, 0.01, 0.012), "lace_amount": 0.3,
+        "wing": (0.02, 0.022, 0.025), "fringe": (0.03, 0.032, 0.036), "shaft": (0.05, 0.05, 0.055), "film": 255,
+        "tail": (0.018, 0.02, 0.022), "tail_fringe": (0.03, 0.032, 0.036), "tail_film": 255},
+}
+
+
+class _Nodes:
+    """Small helper for building shader node trees."""
+
+    def __init__(self, mat):
+        self.nt = mat.node_tree
+        self.bsdf = gh.principled(mat)
+
+    def new(self, kind, **inputs):
+        node = self.nt.nodes.new(kind)
+        for k, v in inputs.items():
+            if isinstance(v, bpy.types.NodeSocket):
+                self.nt.links.new(v, node.inputs[k])
+            else:
+                node.inputs[k].default_value = v
+        return node
+
+    def rgb(self, c):
+        node = self.nt.nodes.new("ShaderNodeRGB")
+        node.outputs[0].default_value = (*c, 1)
+        return node.outputs[0]
+
+    def mix(self, fac, a, b, blend="MIX"):
+        node = self.nt.nodes.new("ShaderNodeMix")
+        node.data_type = "RGBA"
+        node.blend_type = blend
+        sockets = [i for i in node.inputs if i.type == "RGBA"]
+        for sock, val in ((node.inputs[0], fac), (sockets[0], a), (sockets[1], b)):
+            if isinstance(val, bpy.types.NodeSocket):
+                self.nt.links.new(val, sock)
+            else:
+                sock.default_value = val if sock.type != "RGBA" else (*val, 1)
+        return next(o for o in node.outputs if o.type == "RGBA")
+
+    def ramp(self, value, lo, hi, to_lo, to_hi):
+        node = self.new("ShaderNodeMapRange", Value=value)
+        node.inputs["From Min"].default_value, node.inputs["From Max"].default_value = lo, hi
+        node.inputs["To Min"].default_value, node.inputs["To Max"].default_value = to_lo, to_hi
+        return node.outputs["Result"]
+
+    def gray(self, value):
+        node = self.new("ShaderNodeCombineColor", Red=value, Green=value, Blue=value)
+        return node.outputs[0]
+
+    def math(self, op, a, b=0.0):
+        node = self.nt.nodes.new("ShaderNodeMath")
+        node.operation = op
+        for sock, val in zip(node.inputs, (a, b)):
+            if isinstance(val, bpy.types.NodeSocket):
+                self.nt.links.new(val, sock)
+            else:
+                sock.default_value = val
+        return node.outputs[0]
+
+    def finish(self, colour, height, bump=0.3, rough=0.62, film=0):
+        self.nt.links.new(colour, self.bsdf.inputs["Base Color"])
+        self.bsdf.inputs["Roughness"].default_value = rough
+        self.bsdf.inputs["Sheen Weight"].default_value = 0.35            # the soft gloss of feathers
+        self.bsdf.inputs["Sheen Roughness"].default_value = 0.45
+        if film:                                  # iridescent, but still soft feathers
+            self.bsdf.inputs["Thin Film Thickness"].default_value = film
+            self.bsdf.inputs["Thin Film IOR"].default_value = 1.55
+            self.bsdf.inputs["Roughness"].default_value = 0.52
+            self.bsdf.inputs["Specular IOR Level"].default_value = 0.35
+        b = self.new("ShaderNodeBump", Height=height, Strength=bump, Distance=0.004)
+        self.nt.links.new(b.outputs["Normal"], self.bsdf.inputs["Normal"])
+
+
+def hen_body_material(name, c):
+    """Body plumage: overlapping contour feathers (cells of a Voronoi pattern on the rest
+    positions, longer than wide, each lighter towards its tip at the back and bottom where it
+    lies over the next and darker at its root, laced at the rim, varying slightly), the
+    breed's colours by zone (hackle, saddle, breast from the "zones" attribute) and darker
+    streaks in the hackle."""
+    mat = material(name, c["body"], rough=0.62)
+    n = _Nodes(mat)
+    rest = n.new("ShaderNodeAttribute").outputs["Vector"]
+    rest.node.attribute_name = "rest"
+    zones = n.new("ShaderNodeAttribute")
+    zones.attribute_name = "zones"
+    split = n.new("ShaderNodeSeparateColor", Color=zones.outputs["Color"])
+    scaled = n.new("ShaderNodeVectorMath", Vector=rest)
+    scaled.operation = "MULTIPLY"
+    scaled.inputs[1].default_value = (27.0, 36.0, 36.0)
+    cells = n.new("ShaderNodeTexVoronoi", Vector=scaled.outputs[0], Scale=1.0)
+    offset = n.new("ShaderNodeVectorMath")
+    offset.operation = "SUBTRACT"
+    n.nt.links.new(scaled.outputs[0], offset.inputs[0])
+    n.nt.links.new(cells.outputs["Position"], offset.inputs[1])
+    off = n.new("ShaderNodeSeparateXYZ", Vector=offset.outputs[0])
+    tipward = n.math("MULTIPLY", n.math("ADD", off.outputs["X"], off.outputs["Z"]), -0.7)
+    colour = n.rgb(c["body"])
+    colour = n.mix(split.outputs["Blue"], colour, n.rgb(c["breast"]))
+    colour = n.mix(split.outputs["Green"], colour, n.rgb(c["saddle"]))
+    colour = n.mix(split.outputs["Red"], colour, n.rgb(c["hackle"]))
+    # Hackle: long narrow feathers hanging down the neck, light at their tips, dark at the roots.
+    hscaled = n.new("ShaderNodeVectorMath", Vector=rest)
+    hscaled.operation = "MULTIPLY"
+    hscaled.inputs[1].default_value = (50.0, 50.0, 14.0)
+    hcells = n.new("ShaderNodeTexVoronoi", Vector=hscaled.outputs[0], Scale=1.0)
+    hoffset = n.new("ShaderNodeVectorMath")
+    hoffset.operation = "SUBTRACT"
+    n.nt.links.new(hscaled.outputs[0], hoffset.inputs[0])
+    n.nt.links.new(hcells.outputs["Position"], hoffset.inputs[1])
+    hshade = n.ramp(n.new("ShaderNodeSeparateXYZ", Vector=hoffset.outputs[0]).outputs["Z"], -0.5, 0.5, 1.12, 0.68)
+    colour = n.mix(1.0, colour, n.mix(split.outputs["Red"], (1.0, 1.0, 1.0), n.gray(hshade)), "MULTIPLY")
+    shade = n.ramp(tipward, -0.6, 0.6, 0.8, 1.12)                            # tip light, root dark
+    colour = n.mix(1.0, colour, n.gray(shade), "MULTIPLY")
+    vary = n.ramp(n.new("ShaderNodeSeparateColor", Color=cells.outputs["Color"]).outputs["Red"], 0, 1, 0.9, 1.1)
+    colour = n.mix(1.0, colour, n.gray(vary), "MULTIPLY")
+    lace = n.ramp(cells.outputs["Distance"], 0.4, 0.62, 0.0, c["lace_amount"])
+    colour = n.mix(lace, colour, n.rgb(c["lace"]))
+    n.finish(colour, tipward, bump=0.2, film=c["film"])
+    return mat
+
+
+def feather_material(name, base, fringe, shaft, film=0):
+    """Wing and tail feathers, from their UVs (u along the shaft, v across): a fine pale
+    shaft, the vane darker towards the covered root, a lighter fringe and fine barbs."""
+    mat = material(name, base, rough=0.6)
+    n = _Nodes(mat)
+    uv = n.new("ShaderNodeUVMap")
+    xyz = n.new("ShaderNodeSeparateXYZ", Vector=uv.outputs["UV"])
+    u = xyz.outputs["X"]
+    across = n.math("ABSOLUTE", n.math("SUBTRACT", xyz.outputs["Y"], 0.5))
+    across = n.math("MULTIPLY", across, 2.0)                               # 0 at the shaft, 1 at the edge
+    colour = n.rgb(base)
+    colour = n.mix(n.ramp(across, 0.62, 0.95, 0.0, 1.0), colour, n.rgb(fringe))
+    colour = n.mix(1.0, colour, n.gray(n.ramp(u, 0.0, 0.45, 0.7, 1.0)), "MULTIPLY")
+    barb_coord = n.new("ShaderNodeCombineXYZ", X=n.math("ADD", u, n.math("MULTIPLY", across, 0.6)))
+    barbs = n.new("ShaderNodeTexWave", Vector=barb_coord.outputs[0], Scale=24.0)
+    colour = n.mix(1.0, colour, n.gray(n.ramp(barbs.outputs["Fac"], 0, 1, 0.9, 1.06)), "MULTIPLY")
+    colour = n.mix(n.ramp(across, 0.03, 0.09, 1.0, 0.0), colour, n.rgb(shaft))
+    n.finish(colour, barbs.outputs["Fac"], bump=0.12, film=film)
+    return mat
+
+
+def add_wool_bump(mat, scale=70, strength=0.5):
+    """Fine texture for wool or feathers: a small-scale noise (following the body's rest
+    positions) as a bump on the surface normal."""
+    nt = mat.node_tree
+    bsdf = gh.principled(mat)
+    attr = nt.nodes.new("ShaderNodeAttribute")
+    attr.attribute_name = "rest"
+    noise = nt.nodes.new("ShaderNodeTexNoise")
+    noise.inputs["Scale"].default_value = scale
+    noise.inputs["Detail"].default_value = 3
+    nt.links.new(attr.outputs["Vector"], noise.inputs["Vector"])
+    bump = nt.nodes.new("ShaderNodeBump")
+    bump.inputs["Strength"].default_value = strength
+    bump.inputs["Distance"].default_value = 0.01
+    nt.links.new(noise.outputs["Fac"], bump.inputs["Height"])
+    nt.links.new(bump.outputs["Normal"], bsdf.inputs["Normal"])
+
+
+def add_mud(mat, top, amount=0.85):
     """Mixes a dried-mud colour into the coat, strongest at the ground and fading out at
     height `top` (pig-local, from the rest positions, so it stays put when posed)."""
     nt = mat.node_tree
@@ -177,7 +468,7 @@ def add_mud(mat, top):
     height = nt.nodes.new("ShaderNodeMapRange")
     height.inputs["From Min"].default_value = top
     height.inputs["From Max"].default_value = 0.02
-    height.inputs["To Max"].default_value = 0.85
+    height.inputs["To Max"].default_value = amount
     nt.links.new(sep.outputs["Z"], height.inputs["Value"])
     mix = nt.nodes.new("ShaderNodeMix")
     mix.data_type = "RGBA"
@@ -339,14 +630,14 @@ def pasture_parts(rng):
 
 def load(path):
     img = bpy.data.images.load(path)
-    a = np.array(img.pixels[:], dtype=np.float32).reshape(img.size[1], img.size[0], 4)[::-1].copy()
+    a = gh.read_pixels(img)[::-1].copy()
     bpy.data.images.remove(img)
     return a                                                       # top row first
 
 
 def save(a, path):
     img = bpy.data.images.new("out", a.shape[1], a.shape[0], alpha=True)
-    img.pixels[:] = a[::-1].ravel()
+    gh.write_pixels(img, a[::-1])
     img.filepath_raw = path
     img.file_format = "PNG"
     img.save()
@@ -431,31 +722,35 @@ def merge_to(boxes, n):
 
 # Main ------------------------------------------------------------------------------
 
-def place_animal(rig, me, x, y, yaw, pose):
-    """Positions an animal's skeleton. Lying animals are rolled onto their side, shifted so
+def place_animal(rig, me, x, y, yaw, pose, scale=ANIMAL_SCALE, roll=False):
+    """Positions an animal's skeleton. Lying pigs are rolled onto their side, shifted so
     their body is centred on (x, y), and lifted so their lowest point is on the ground."""
     a = math.radians(yaw)
-    rig.scale = (ANIMAL_SCALE, ANIMAL_SCALE, ANIMAL_SCALE)
-    if pose == "lying":
+    rig.scale = (scale, scale, scale)
+    if pose == "lying" and roll:
         shift, lift = pig_model.lying_transform(me)
         rig.rotation_euler = (pig_model.LYING_ROLL, 0, a)
-        rig.location = (x - math.sin(a) * shift * ANIMAL_SCALE, y + math.cos(a) * shift * ANIMAL_SCALE,
-                        lift * ANIMAL_SCALE + 0.02)
+        rig.location = (x - math.sin(a) * shift * scale, y + math.cos(a) * shift * scale, lift * scale + 0.02)
     else:
         rig.rotation_euler = (0, 0, a)
         rig.location = (x, y, 0.02)
 
-def render_region(scene, cam, obj):
+def render_region(scene, cam, obj, set_pose=None, samples=16):
     """Limits rendering to the part of the frame where obj and its shadow can appear,
-    which makes the per-cow renders much faster (the image size stays the same)."""
+    which makes the per-cow renders much faster (the image size stays the same). With
+    set_pose(t), the region covers the whole loop (spread wings, flying feathers)."""
     from bpy_extras.object_utils import world_to_camera_view
     sun = scene.objects["Sun"].matrix_world.to_quaternion() @ V((0, 0, -1))
-    deps = bpy.context.evaluated_depsgraph_get()
     pts = []
-    for c in obj.evaluated_get(deps).bound_box:
-        w = obj.matrix_world @ V(c)
-        pts.append(w)
-        pts.append(w - sun * (w.z / sun.z))                     # where its shadow lands
+    for k in range(samples if set_pose else 1):
+        if set_pose:
+            set_pose(k / samples)
+            bpy.context.view_layer.update()
+        deps = bpy.context.evaluated_depsgraph_get()
+        for c in obj.evaluated_get(deps).bound_box:
+            w = obj.matrix_world @ V(c)
+            pts.append(w)
+            pts.append(w - sun * (max(w.z, 0.0) / sun.z))         # where its shadow lands
     view = [world_to_camera_view(scene, cam, p) for p in pts]
     pad = 0.04
     scene.render.use_border = True
@@ -591,6 +886,9 @@ def main():
     # Every pass samples each pixel the same way, so the ground away from the animal matches
     # exactly between renders with and without it.
     scene.cycles.use_adaptive_sampling = False
+    # Keep the scene loaded between the hundreds of frames (only the animals change), which
+    # saves re-syncing the whole paddock for every frame.
+    scene.render.use_persistent_data = True
     placed = {}
     for kind in ONLY:
         spec = ANIMALS[kind]
@@ -600,7 +898,7 @@ def main():
             body = place(me, coll, model)
             rig = spec["rig"](body, joints, f"{kind}{i}")
             rig.parent = model
-            place_animal(rig, me, x, y, yaw, pose)
+            place_animal(rig, me, x, y, yaw, pose, spec.get("scale", ANIMAL_SCALE), spec.get("roll_lying", False))
             rigs.append(rig)
             bodies.append(body)
         placed[kind] = (rigs, bodies)
@@ -637,7 +935,7 @@ def main():
             bodies[i].hide_render = False
             spec["pose"](rig, pos[3], 0.0, i)
             bpy.context.view_layer.update()
-            render_region(scene, cam, bodies[i])
+            render_region(scene, cam, bodies[i], lambda t: spec["pose"](rig, pos[3], t, i))
             for layer_kind in ("body", "shadow"):
                 shadow_pass = layer_kind == "shadow"
                 ground.visible_camera = shadow_pass

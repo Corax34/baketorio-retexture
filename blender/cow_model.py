@@ -98,9 +98,10 @@ def _lerp_stations(path, profile, samples=18):
     return [(point_at(i / (samples - 1)), *profile_at(i / (samples - 1))) for i in range(samples)]
 
 
-def body_parts(bm, pose):
+def body_parts(bm, pose, bull=False):
     """Lofts the body, neck, head, ears, legs and tail for a pose; returns the joint
-    positions the skeleton (cow_rig.py) is built from."""
+    positions the skeleton (cow_rig.py) is built from. A bull is built heavier in front:
+    a high crest over the withers, broad shoulders and a thick neck."""
     # Trunk: (x, z_top, z_bottom, half_width)
     trunk = [
         (-0.9, 1.30, 1.02, 0.13),   # pin bones / tail head
@@ -114,6 +115,9 @@ def body_parts(bm, pose):
         (0.7, 1.33, 0.70, 0.22),    # point of shoulder
         (0.8, 1.18, 0.80, 0.14),    # brisket
     ]
+    if bull:   # (x, extra top, extra half width): crest and shoulders
+        more = {0.38: (0.04, 0.03), 0.55: (0.08, 0.05), 0.7: (0.07, 0.05), 0.8: (0.04, 0.03)}
+        trunk = [(x, top + more.get(x, (0, 0))[0], bot, hw + more.get(x, (0, 0))[1]) for x, top, bot, hw in trunk]
     stations = []
     for x, top, bot, hw in trunk:
         c = V((x, 0, (top + bot) / 2))
@@ -140,18 +144,20 @@ def body_parts(bm, pose):
         neck_path = [V((0.55, 0, 1.08)), V((0.86, 0, 1.26)), V((1.03, 0, 1.4))]
         poll = V((1.05, 0, 1.44))
         face = V((0.5, 0, -0.86)).normalized()
+    thick = 1.2 if bull else 1.0                          # a bull's neck is massive
     loft(bm, _lerp_stations(neck_path + [poll, poll + face * 0.12], [
-        (0.0, 0.25, 0.26, 0.36, 2.2),
-        (0.35, 0.2, 0.23, 0.32, 2.2),    # dewlap hangs under the neck
-        (0.7, 0.16, 0.17, 0.2, 2.2),
-        (0.9, 0.14, 0.14, 0.14, 2.2),
+        (0.0, 0.25 * thick, 0.26 * thick * thick, 0.36, 2.2),
+        (0.35, 0.2 * thick, 0.23 * thick * thick, 0.32, 2.2),    # dewlap hangs under the neck
+        (0.7, 0.16 * thick, 0.17 * thick, 0.2, 2.2),
+        (0.9, 0.14 * thick, 0.14, 0.14, 2.2),
         (1.0, 0.11, 0.1, 0.1, 2.2),
     ]), up_hint=V((0, 0, 1)))
     # Head: poll -> forehead (widest at the eyes) -> long face -> broad muzzle.
     nose = poll + face * 0.5
+    brow = 0.02 if bull else 0.0                          # broad, curly forehead
     loft(bm, _lerp_stations([poll, nose], [
-        (0.0, 0.12, 0.11, 0.11, 2.2),
-        (0.18, 0.14, 0.12, 0.13, 2.4),   # widest at the eyes
+        (0.0, 0.12 + brow, 0.11 + brow, 0.11, 2.2),
+        (0.18, 0.14 + brow, 0.12 + brow, 0.13, 2.4),   # widest at the eyes
         (0.55, 0.11, 0.1, 0.12, 2.3),
         (0.82, 0.1, 0.09, 0.11, 2.3),
         (0.95, 0.115, 0.085, 0.1, 2.5),  # muzzle flares
@@ -202,8 +208,9 @@ def body_parts(bm, pose):
             "neck": list(neck_path) + [poll], "ears": ears, "tail": list(tail)}
 
 
-def extras(bm_dict, info, horns):
-    """Small parts with their own colours (hooves, muzzle, udder, switch, horns)."""
+def extras(bm_dict, info, horns, bull=False):
+    """Small parts with their own colours (hooves, muzzle, udder, switch, horns, and a
+    bull's nose ring instead of the udder)."""
     for path in info["legs"]:
         foot = path[-1]
         bm = bm_dict["hoof"]
@@ -219,13 +226,24 @@ def extras(bm_dict, info, horns):
                              (nose + face * 0.02, 0.114, 0.09, 0.096, 2.4),
                              (nose + face * 0.045, 0.085, 0.06, 0.07, 2.2),
                              (nose + face * 0.06, 0.035, 0.025, 0.03, 2.0)], up_hint=V((1, 0, 0.2)))
-    loft(bm_dict["udder"], [(V((-0.5, 0, 0.62)), 0.12, 0.08, 0.08, 2.2),
-                            (V((-0.35, 0, 0.53)), 0.17, 0.12, 0.13, 2.2),
-                            (V((-0.18, 0, 0.58)), 0.12, 0.08, 0.08, 2.2)], up_hint=V((0, 0, 1)))
-    for tx in (-0.43, -0.28):
-        for ty in (-0.06, 0.06):
-            loft(bm_dict["udder"], [(V((tx, ty, 0.45)), 0.018, 0.018, 0.018, 2),
-                                    (V((tx, ty, 0.38)), 0.014, 0.014, 0.014, 2)], up_hint=V((1, 0, 0)))
+    if bull:
+        # Brass ring through the nose, hanging below the muzzle.
+        side = info["side"]
+        up = side.cross(face).normalized()
+        centre = nose + face * 0.045 - up * 0.07
+        ring = []
+        for k in range(17):
+            a = 6.2832 * k / 16
+            ring.append((centre + (up * math.cos(a) + face * math.sin(a)) * 0.045, 0.008, 0.008, 0.008, 2))
+        loft(bm_dict["ring"], ring, up_hint=side, cap=False)
+    else:
+        loft(bm_dict["udder"], [(V((-0.5, 0, 0.62)), 0.12, 0.08, 0.08, 2.2),
+                                (V((-0.35, 0, 0.53)), 0.17, 0.12, 0.13, 2.2),
+                                (V((-0.18, 0, 0.58)), 0.12, 0.08, 0.08, 2.2)], up_hint=V((0, 0, 1)))
+        for tx in (-0.43, -0.28):
+            for ty in (-0.06, 0.06):
+                loft(bm_dict["udder"], [(V((tx, ty, 0.45)), 0.018, 0.018, 0.018, 2),
+                                        (V((tx, ty, 0.38)), 0.014, 0.014, 0.014, 2)], up_hint=V((1, 0, 0)))
     te = info["tail_end"]
     loft(bm_dict["switch"], _lerp_stations([te + V((0, 0, 0.12)), te + V((0.01, 0, -0.25))], [
         (0.0, 0.025, 0.025, 0.025, 2), (0.35, 0.055, 0.05, 0.05, 2), (0.7, 0.045, 0.04, 0.04, 2),
@@ -233,6 +251,14 @@ def extras(bm_dict, info, horns):
     if horns:
         for s in (-1, 1):
             base = info["poll"] + info["side"] * s * 0.08 + V((0, 0, 0.04))
+            if bull:   # short, thick, sweeping out and forward
+                mid = base + info["side"] * s * 0.12 + V((0, 0, 0.02))
+                tip = mid + info["side"] * s * 0.05 + info["face"] * 0.08 + V((0, 0, 0.05))
+                loft(bm_dict["horn"], _lerp_stations([base, mid, tip], [(0, 0.05, 0.05, 0.05, 2),
+                                                                      (0.5, 0.035, 0.035, 0.035, 2),
+                                                                      (1, 0.009, 0.009, 0.009, 2)]),
+                     up_hint=V((1, 0, 0)))
+                continue
             tip = base + info["side"] * s * 0.16 + V((0, 0, 0.1)) + info["face"] * 0.04
             loft(bm_dict["horn"], _lerp_stations([base, tip], [(0, 0.035, 0.035, 0.035, 2),
                                                              (1, 0.008, 0.008, 0.008, 2)]),
@@ -257,22 +283,23 @@ def _apply(o, mod_type, **settings):
         bpy.ops.object.modifier_apply(modifier=m.name)
 
 
-def build_cow_mesh(name, pose, coat_mat, mats, horns=False):
+def build_cow_mesh(name, pose, coat_mat, mats, horns=False, bull=False):
     """Returns (mesh, joints): the fused, smoothed body plus the coloured extras, with each
     point's rest position stored as the "rest" attribute so coat patterns follow the skin
     when the skeleton bends it."""
     coll = bpy.context.scene.collection
     bm = bmesh.new()
-    info = body_parts(bm, pose)
+    info = body_parts(bm, pose, bull)
     body = _to_object(bm, name + "-body", coll)
     _apply(body, "REMESH", mode="VOXEL", voxel_size=0.018)
     _apply(body, "SMOOTH", factor=0.8, iterations=4)
     _apply(body, "DECIMATE", ratio=0.35)
-    keys = ["hoof", "muzzle", "udder", "switch", "horn"]
+    keys = ["hoof", "muzzle", "udder", "switch", "horn", "ring"]
     bms = {k: bmesh.new() for k in keys}
-    extras(bms, info, horns)
+    extras(bms, info, horns or bull, bull)
     pieces = [body]
-    mat_for = {"hoof": "hoof", "muzzle": "muzzle", "udder": "udder", "switch": "tuft", "horn": "horn"}
+    mat_for = {"hoof": "hoof", "muzzle": "muzzle", "udder": "udder", "switch": "tuft", "horn": "horn",
+               "ring": "brass"}
     for k in keys:
         if len(bms[k].verts) == 0:
             bms[k].free()

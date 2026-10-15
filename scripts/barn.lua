@@ -1,16 +1,22 @@
--- Draws the animals in each barn: one for every animal of the kind its recipe uses (cows,
--- pigs) that is in its input or in the craft in progress (animals waiting in the output are
--- not shown), up to the number of rendered positions. They move while the barn works and
--- hold still when it stops. The pictures are rendered by blender/render_barn.py.
+-- Draws the animals in each barn: one for every animal of the species its recipe uses (cows,
+-- pigs, sheep, hens) that is in its input or in the craft in progress (animals waiting in the
+-- output are not shown), up to the number of rendered positions. Bulls, boars and rams have
+-- their own look and take the first positions. While eggs hatch, a hen broods on a nest for
+-- each egg. The animals move while the barn works and hold still when it stops. The pictures
+-- are rendered by blender/render_barn.py.
 
 local sprites = require("prototypes.barn-sprites")
 
 local lib = {}
 
--- Items that count as each animal kind (calves and piglets only exist with spoiling enabled).
-local ANIMAL_ITEMS = {
-    cow = { "cow", "bull", "calf-cow", "calf-bull" },
-    pig = { "pig", "boar", "piglet-pig", "piglet-boar" },
+-- Per species: the sprite kind for females (and young) and for males, and the items that count
+-- for each. Bulls, boars, rams and all young animals only exist with spoiling enabled.
+local SPECIES = {
+    { female = "cow", male = "bull", females = { "cow", "calf-cow", "calf-bull" }, males = { "bull" } },
+    { female = "pig", male = "boar", females = { "pig", "piglet-pig", "piglet-boar" }, males = { "boar" } },
+    { female = "sheep", male = "ram", females = { "sheep", "lamb-sheep", "lamb-ram" }, males = { "ram" } },
+    { female = "chicken", females = { "chicken", "chick" }, males = {} },
+    { female = "nest", females = { "egg" }, males = {} },     -- eggs being hatched
 }
 local ANIMATION_PREFIX = "baketorio-retexture-barn-"   -- see prototypes/barn-animals.lua
 
@@ -21,65 +27,79 @@ local SPEED = 0.5
 lib.checkTicks = 30
 
 -- Per kind: positions in drawing order (further north first, so animals further south are
--- drawn in front) and how many there are.
-local drawOrder, positions = {}, {}
+-- drawn in front) and how many there are. A male kind shares its female kind's positions.
+local drawOrder, positions, rendered = {}, {}, {}
 for _, kind in ipairs(sprites.animals) do
     local list = require("prototypes.barn-sprites-" .. kind)
     local order = {}
     for i in ipairs(list) do order[#order + 1] = i end
     table.sort(order, function (a, b) return list[a].depth > list[b].depth end)
-    drawOrder[kind], positions[kind] = order, #list
+    drawOrder[kind], positions[kind], rendered[kind] = order, #list, true
 end
 
--- Animal items of each kind that exist in this game.
-local items
----@type fun(kind:string):string[]
-local itemsOf = function (kind)
-    if not items then
-        items = {}
-        for k, names in pairs(ANIMAL_ITEMS) do
-            items[k] = {}
-            for _, name in ipairs(names) do
-                if prototypes.item[name] then items[k][#items[k] + 1] = name end
-            end
-        end
+-- Species items that exist in this game (get_item_count fails for unknown names).
+local existing
+---@type fun(names:string[]):string[]
+local present = function (names)
+    existing = existing or {}
+    local out = {}
+    for _, name in ipairs(names) do
+        if existing[name] == nil then existing[name] = prototypes.item[name] ~= nil end
+        if existing[name] then out[#out + 1] = name end
     end
-    return items[kind] or {}
+    return out
 end
 
--- The animal kind a recipe works with, or nil.
----@type fun(recipe:LuaRecipe|nil):string|nil
-local kindOf = function (recipe)
+-- The species a recipe works with, or nil.
+---@type fun(recipe:LuaRecipe|nil):table|nil
+local speciesOf = function (recipe)
     if not recipe then return nil end
-    for _, kind in ipairs(sprites.animals) do
-        for _, ing in pairs(recipe.ingredients) do
-            for _, name in ipairs(itemsOf(kind)) do
-                if ing.name == name then return kind end
+    for _, sp in ipairs(SPECIES) do
+        if rendered[sp.female] then
+            for _, ing in pairs(recipe.ingredients) do
+                for _, list in ipairs({ sp.females, sp.males }) do
+                    for _, name in ipairs(list) do
+                        if ing.name == name then return sp end
+                    end
+                end
             end
         end
     end
 end
 
----@type fun(entity:LuaEntity, kind:string|nil):integer
-local animalCount = function (entity, kind)
-    if not kind then return 0 end
+-- How many of the given items are in the barn: in its input or used by the craft in progress.
+---@type fun(entity:LuaEntity, names:string[]):integer
+local countItems = function (entity, names)
     local count = 0
     local input = entity.get_inventory(defines.inventory.crafter_input)
     if input then
-        for _, name in ipairs(itemsOf(kind)) do
+        for _, name in ipairs(present(names)) do
             count = count + input.get_item_count(name)
         end
     end
-    -- Animals used by the craft in progress have left the input but are still in the barn.
     local recipe = entity.is_crafting() and entity.get_recipe()
     if recipe then
         for _, ing in pairs(recipe.ingredients) do
-            for _, name in ipairs(itemsOf(kind)) do
+            for _, name in ipairs(names) do
                 if ing.name == name then count = count + ing.amount end
             end
         end
     end
-    return math.min(positions[kind], count)
+    return count
+end
+
+-- (females, males) to draw for a species, together at most its number of positions.
+---@type fun(entity:LuaEntity, sp:table|nil):integer, integer
+local animalCounts = function (entity, sp)
+    if not sp then return 0, 0 end
+    local room = positions[sp.female]
+    local males = sp.male and rendered[sp.male] and countItems(entity, sp.males) or 0
+    local females = countItems(entity, sp.females)
+    if not (sp.male and rendered[sp.male]) then           -- no male look: draw them as females
+        females = females + countItems(entity, sp.males)
+    end
+    males = math.min(males, room)
+    return math.min(females, room - males), males
 end
 
 -- Each barn keeps its own animation clock (frame = tick * speed + offset), so animals can
@@ -101,17 +121,20 @@ end
 ---@type fun(data:table)
 local updateBarn = function (data)
     local entity = data.entity
-    local kind = kindOf(entity.get_recipe())
-    local count = animalCount(entity, kind)
-    if count ~= data.count or kind ~= data.kind then
+    local sp = speciesOf(entity.get_recipe())
+    local females, males = animalCounts(entity, sp)
+    local key = sp and (sp.female .. ":" .. females .. ":" .. males) or ""
+    if key ~= data.key then
         for _, obj in pairs(data.renders) do
             if obj.valid then obj.destroy() end
         end
         data.renders = {}
         -- Shadows on a lower layer than the animals, so no shadow is ever drawn over an animal.
+        -- Males take the first positions, females the next ones.
         for _, part in ipairs({ { "-shadow", "higher-object-under" }, { "", "higher-object-above" } }) do
-            for _, i in ipairs(kind and drawOrder[kind] or {}) do
-                if i <= count then
+            for _, i in ipairs(sp and drawOrder[sp.female] or {}) do
+                local kind = (i <= males and sp.male) or (i <= males + females and sp.female) or nil
+                if kind then
                     data.renders[#data.renders + 1] = rendering.draw_animation {
                         animation = ANIMATION_PREFIX .. kind .. "-" .. i .. part[1],
                         target = entity,
@@ -123,7 +146,7 @@ local updateBarn = function (data)
                 end
             end
         end
-        data.count, data.kind = count, kind
+        data.key = key
     end
     local moving = entity.status == defines.entity_status.working
     if moving ~= data.moving then setMoving(data, moving) end
@@ -137,7 +160,7 @@ lib.trackBarn = function (entity)
     local data = storage.barns[entity.unit_number]
     if not data then
         -- Start barns at different points in the loop so neighbours don't move in step.
-        data = { entity = entity, renders = {}, count = 0, speed = 0,
+        data = { entity = entity, renders = {}, key = "", speed = 0,
                  offset = (entity.unit_number * 7) % sprites.frames, moving = false }
         storage.barns[entity.unit_number] = data
     end
@@ -145,7 +168,7 @@ lib.trackBarn = function (entity)
 end
 
 -- Finds every barn again, e.g. after the mod is added to an existing save.
--- storage.barns: {LuaEntity.unit_number: {entity, renders: LuaRenderObject[], kind, count, speed, offset, moving}}
+-- storage.barns: {LuaEntity.unit_number: {entity, renders: LuaRenderObject[], key, speed, offset, moving}}
 ---@type fun()
 lib.rebuildBarns = function ()
     for _, obj in pairs(rendering.get_all_objects("baketorio-retexture")) do
