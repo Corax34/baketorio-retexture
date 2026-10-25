@@ -129,17 +129,18 @@ local updateBarn = function (data)
             if obj.valid then obj.destroy() end
         end
         data.renders = {}
-        -- Shadows on a lower layer than the animals, so no shadow is ever drawn over an animal.
-        -- Males take the first positions, females the next ones.
-        for _, part in ipairs({ { "-shadow", "higher-object-under" }, { "", "higher-object-above" } }) do
+        -- On the object layer, sorted with the barn like an entity, so characters and buildings
+        -- in front of it are drawn over the animals. All shadows first, so no shadow is ever
+        -- drawn over an animal. Males take the first positions, females the next ones.
+        for _, suffix in ipairs({ "-shadow", "" }) do
             for _, i in ipairs(sp and drawOrder[sp.female] or {}) do
                 local kind = (i <= males and sp.male) or (i <= males + females and sp.female) or nil
                 if kind then
                     data.renders[#data.renders + 1] = rendering.draw_animation {
-                        animation = ANIMATION_PREFIX .. kind .. "-" .. i .. part[1],
+                        animation = ANIMATION_PREFIX .. kind .. "-" .. i .. suffix,
                         target = entity,
                         surface = entity.surface,
-                        render_layer = part[2],
+                        render_layer = "object",
                         animation_speed = data.speed,
                         animation_offset = data.offset,
                     }

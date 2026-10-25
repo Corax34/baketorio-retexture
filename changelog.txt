@@ -1,4 +1,9 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.1.1
+Date: 2026-10-25
+  Bugfixes:
+    - Characters and buildings in front of a greenhouse or barn are no longer cut off by its crops or animals.
+---------------------------------------------------------------------------------------------------
 Version: 0.1.0
 Date: 2026-10-16
   Features:

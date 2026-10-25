@@ -120,7 +120,7 @@ local updateGreenhouse = function (data)
             sprite = sprite,
             target = data.entity,
             surface = data.entity.surface,
-            render_layer = "higher-object-under",
+            render_layer = "object",            -- sorted with the greenhouse, so characters in front stay in front
         }
     end
 end
